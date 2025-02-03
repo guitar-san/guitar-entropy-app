@@ -80,19 +80,23 @@ def main():
         entropy_values["unique_id"] = str(uuid.uuid4())  # 一意の識別IDを追加
         entropy_df = pd.DataFrame([entropy_values])
         
+        # file_name を一番左に移動
+        entropy_df = entropy_df[["file_name"] + [col for col in entropy_df.columns if col != "file_name"]]
+        
         # 結果の表示
         st.write("### 計算されたエントロピー値")
         st.write(entropy_df)
         
-        # ファイルの保存
+        # ファイルの保存（同名のファイルがある場合は上書き）
         if os.path.exists(entropy_file_path):
             existing_entropy_df = pd.read_csv(entropy_file_path)
+            existing_entropy_df = existing_entropy_df[existing_entropy_df["file_name"] != uploaded_file.name]  # 同名ファイル削除
             updated_entropy_df = pd.concat([existing_entropy_df, entropy_df], ignore_index=True)
         else:
             updated_entropy_df = entropy_df
         
         updated_entropy_df.to_csv(entropy_file_path, index=False)
-        st.success("エントロピー値を `total-entropy.csv` に保存しました！")
+        st.success(f"エントロピー値を `total-entropy.csv` に保存しました！（{uploaded_file.name} は上書き）")
         
     # ダウンロードリンク
     if os.path.exists(entropy_file_path):
