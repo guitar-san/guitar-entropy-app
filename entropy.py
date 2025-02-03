@@ -102,7 +102,7 @@ def main():
             updated_entropy_df = entropy_df
         
         updated_entropy_df.to_csv(entropy_file_path, index=False)
-        st.success(f"エントロピー値を `total-entropy.csv` に保存しました！（{uploaded_file.name} は上書き）")
+        st.success(f"エントロピー値を `total-entropy.csv` に保存しました！")
         
     # ダウンロードリンク
     if os.path.exists(entropy_file_path):
