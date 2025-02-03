@@ -38,6 +38,9 @@ def main():
             saved_entropy_df["unique_id"] = [str(uuid.uuid4()) for _ in range(len(saved_entropy_df))]
             saved_entropy_df.to_csv(entropy_file_path, index=False)
         
+        # file_name を一番左に配置
+        cols = ["file_name"] + [col for col in saved_entropy_df.columns if col != "file_name"]
+        saved_entropy_df = saved_entropy_df[cols]
         st.write(saved_entropy_df)
         
         # データ全削除ボタン
@@ -87,10 +90,13 @@ def main():
         st.write("### 計算されたエントロピー値")
         st.write(entropy_df)
         
-        # ファイルの保存（同名のファイルがある場合は上書き）
+        # 上書き確認
         if os.path.exists(entropy_file_path):
             existing_entropy_df = pd.read_csv(entropy_file_path)
-            existing_entropy_df = existing_entropy_df[existing_entropy_df["file_name"] != uploaded_file.name]  # 同名ファイル削除
+            if uploaded_file.name in existing_entropy_df["file_name"].values:
+                if not st.checkbox(f"{uploaded_file.name} を上書きしますか？"):
+                    return
+                existing_entropy_df = existing_entropy_df[existing_entropy_df["file_name"] != uploaded_file.name]  # 同名ファイル削除
             updated_entropy_df = pd.concat([existing_entropy_df, entropy_df], ignore_index=True)
         else:
             updated_entropy_df = entropy_df
