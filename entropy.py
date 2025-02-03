@@ -24,12 +24,29 @@ def calculate_entropy(series):
 # メイン関数
 def main():
     st.title("クラシックギター曲のエントロピー計算")
-    st.write("CSVファイルをアップロードしてください。")
-    
-    # ファイルアップロード
-    uploaded_file = st.file_uploader("CSVファイルをドロップまたは選択", type=["csv"])
     
     entropy_file_path = "total-entropy.csv"
+    
+    # 既存のエントロピー一覧を表示（アップロード前でも見れるようにする）
+    if os.path.exists(entropy_file_path):
+        st.write("### すべてのアップロードファイルのエントロピー一覧")
+        saved_entropy_df = pd.read_csv(entropy_file_path)
+        st.write(saved_entropy_df)
+        
+        # 削除したいファイルの選択
+        file_list = saved_entropy_df["file_name"].unique().tolist()
+        if len(file_list) > 0:
+            file_to_delete = st.selectbox("削除するファイルを選択", file_list)
+            
+            if st.button("選択したファイルのエントロピーデータを削除"):
+                saved_entropy_df = saved_entropy_df[saved_entropy_df["file_name"] != file_to_delete]
+                saved_entropy_df.to_csv(entropy_file_path, index=False)
+                st.warning(f"ファイル `{file_to_delete}` のエントロピーデータを削除しました！")
+                st.experimental_rerun()
+    
+    # ファイルアップロード
+    st.write("### 新しいCSVファイルをアップロード")
+    uploaded_file = st.file_uploader("CSVファイルをドロップまたは選択", type=["csv"])
     
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -60,27 +77,12 @@ def main():
         
         updated_entropy_df.to_csv(entropy_file_path, index=False)
         st.success("エントロピー値を `total-entropy.csv` に保存しました！")
-    
-    # 保存されたエントロピー一覧を表示
+        
+    # ダウンロードリンク
     if os.path.exists(entropy_file_path):
-        st.write("### すべてのアップロードファイルのエントロピー一覧")
-        saved_entropy_df = pd.read_csv(entropy_file_path)
-        st.write(saved_entropy_df)
-        
-        # 削除したいファイルの選択
-        file_list = saved_entropy_df["file_name"].unique()
-        file_to_delete = st.selectbox("削除するファイルを選択", file_list)
-        
-        if st.button("選択したファイルのエントロピーデータを削除"):
-            saved_entropy_df = saved_entropy_df[saved_entropy_df["file_name"] != file_to_delete]
-            saved_entropy_df.to_csv(entropy_file_path, index=False)
-            st.warning(f"ファイル `{file_to_delete}` のエントロピーデータを削除しました！")
-            st.experimental_rerun()
-        
-        # ダウンロードリンク
         st.download_button(
             label="エントロピーCSVをダウンロード",
-            data=saved_entropy_df.to_csv(index=False).encode("utf-8"),
+            data=pd.read_csv(entropy_file_path).to_csv(index=False).encode("utf-8"),
             file_name="total-entropy.csv",
             mime="text/csv"
         )
