@@ -24,6 +24,7 @@ def main():
         # 計算対象のカラム
         columns_to_analyze = ["absolute_pitch", "pitch_class", "duration", "fingering", "string"]
         entropy_values = {col: calculate_entropy(df[col].dropna()) for col in columns_to_analyze}
+        entropy_values["file_name"] = uploaded_file.name  # ファイル名を記録
         entropy_df = pd.DataFrame([entropy_values])
         
         # 結果の表示
@@ -40,6 +41,10 @@ def main():
         
         updated_entropy_df.to_csv(entropy_file_path, index=False)
         st.success("エントロピー値を `total-entropy.csv` に保存しました！")
+        
+        # 保存されたエントロピー一覧を表示
+        st.write("### すべてのアップロードファイルのエントロピー一覧")
+        st.write(updated_entropy_df)
         
         # ダウンロードリンク
         st.download_button(
