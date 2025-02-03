@@ -32,6 +32,12 @@ def main():
     if os.path.exists(entropy_file_path):
         st.write("### すべてのアップロードファイルのエントロピー一覧")
         saved_entropy_df = pd.read_csv(entropy_file_path)
+        
+        # `unique_id` がない場合は追加
+        if "unique_id" not in saved_entropy_df.columns:
+            saved_entropy_df["unique_id"] = [str(uuid.uuid4()) for _ in range(len(saved_entropy_df))]
+            saved_entropy_df.to_csv(entropy_file_path, index=False)
+        
         st.write(saved_entropy_df)
         
         # 削除したいデータの選択（file_name + unique_id）
