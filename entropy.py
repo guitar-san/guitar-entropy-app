@@ -94,7 +94,7 @@ def main():
         if os.path.exists(entropy_file_path):
             existing_entropy_df = pd.read_csv(entropy_file_path)
             if uploaded_file.name in existing_entropy_df["file_name"].values:
-                if not st.checkbox(f"{uploaded_file.name} を上書きしますか？"):
+                if not st.checkbox(f"{uploaded_file.name} は既に一覧にあります。上書きしますか？チェックボタンを押すと上書きされます。"):
                     return
                 existing_entropy_df = existing_entropy_df[existing_entropy_df["file_name"] != uploaded_file.name]  # 同名ファイル削除
             updated_entropy_df = pd.concat([existing_entropy_df, entropy_df], ignore_index=True)
