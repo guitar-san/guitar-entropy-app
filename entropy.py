@@ -40,6 +40,12 @@ def main():
         
         st.write(saved_entropy_df)
         
+        # データ全削除ボタン
+        if st.button("全データを削除"):
+            os.remove(entropy_file_path)
+            st.warning("全エントロピーデータを削除しました！")
+            st.experimental_rerun()
+        
         # 削除したいデータの選択（file_name + unique_id）
         if not saved_entropy_df.empty:
             saved_entropy_df["entry"] = saved_entropy_df["file_name"] + " (ID: " + saved_entropy_df["unique_id"] + ")"
