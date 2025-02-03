@@ -69,7 +69,7 @@ def main():
         st.write(df.head())
         
         # 計算対象のカラム
-        columns_to_analyze = ["absolute_pitch", "pitch_class", "duration", "fingering", "string"]
+        columns_to_analyze = ["absolute_pitch", "pitch_class", "duration", "fingering", "string", "flet"]
         entropy_values = {}
         debug_info = {}
         
