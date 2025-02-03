@@ -3,16 +3,23 @@ import pandas as pd
 import numpy as np
 import os
 
-# エントロピー計算関数
+# エントロピー計算関数（途中過程を表示）
 def calculate_entropy(series):
-    value_counts = series.value_counts(normalize=True)
-    return -np.sum(value_counts * np.log2(value_counts))
-
-# デバッグ用のエントロピー計算関数
-def compute_entropy_debug(series):
-    value_counts = series.value_counts(normalize=True)
-    entropy = -np.sum(value_counts * np.log2(value_counts))
-    return entropy, value_counts  # 各カテゴリの確率分布も確認
+    value_counts = series.value_counts()
+    total_count = len(series)
+    probabilities = value_counts / total_count
+    
+    # 情報量を算出
+    information_values = -probabilities * np.log2(probabilities)
+    entropy = information_values.sum()
+    
+    # 途中過程をデバッグ表示用に返す
+    return entropy, pd.DataFrame({
+        "ラベル": value_counts.index,
+        "出現数": value_counts.values,
+        "確率": probabilities.values,
+        "情報量": information_values.values
+    })
 
 # メイン関数
 def main():
@@ -29,15 +36,14 @@ def main():
         
         # 計算対象のカラム
         columns_to_analyze = ["absolute_pitch", "pitch_class", "duration", "fingering", "string"]
-        entropy_values = {col: calculate_entropy(df[col].dropna()) for col in columns_to_analyze}
+        entropy_values = {}
+        debug_info = {}
+        
+        for col in columns_to_analyze:
+            entropy_values[col], debug_info[col] = calculate_entropy(df[col].dropna())
+        
         entropy_values["file_name"] = uploaded_file.name  # ファイル名を記録
         entropy_df = pd.DataFrame([entropy_values])
-        
-        # デバッグ用の詳細計算
-        entropy_debug = {}
-        value_distributions = {}
-        for col in ["absolute_pitch", "pitch_class"]:
-            entropy_debug[col], value_distributions[col] = compute_entropy_debug(df[col].dropna())
         
         # 結果の表示
         st.write("### 計算されたエントロピー値")
@@ -58,11 +64,11 @@ def main():
         st.write("### すべてのアップロードファイルのエントロピー一覧")
         st.write(updated_entropy_df)
         
-        # デバッグ情報の表示
-        st.write("### デバッグ: エントロピー計算詳細")
-        for col in entropy_debug:
-            st.write(f"{col}: {entropy_debug[col]}")
-            st.write(value_distributions[col])
+        # 各カラムの途中計算過程を表示
+        st.write("### 計算過程の詳細")
+        for col in debug_info:
+            st.write(f"#### {col} の計算過程")
+            st.write(debug_info[col])
         
         # ダウンロードリンク
         st.download_button(
