@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import uuid
 
 # エントロピー計算関数（途中過程を表示）
 def calculate_entropy(series):
@@ -33,15 +34,17 @@ def main():
         saved_entropy_df = pd.read_csv(entropy_file_path)
         st.write(saved_entropy_df)
         
-        # 削除したいファイルの選択
-        file_list = saved_entropy_df["file_name"].unique().tolist()
-        if len(file_list) > 0:
-            file_to_delete = st.selectbox("削除するファイルを選択", file_list)
+        # 削除したいデータの選択（file_name + unique_id）
+        if not saved_entropy_df.empty:
+            saved_entropy_df["entry"] = saved_entropy_df["file_name"] + " (ID: " + saved_entropy_df["unique_id"] + ")"
+            selected_entry = st.selectbox("削除するデータを選択", saved_entropy_df["entry"].tolist())
+            selected_unique_id = selected_entry.split(" (ID: ")[1][:-1]
             
-            if st.button("選択したファイルのエントロピーデータを削除"):
-                saved_entropy_df = saved_entropy_df[saved_entropy_df["file_name"] != file_to_delete]
+            if st.button("選択したエントロピーデータを削除"):
+                saved_entropy_df = saved_entropy_df[saved_entropy_df["unique_id"] != selected_unique_id]
+                saved_entropy_df.drop(columns=["entry"], inplace=True)
                 saved_entropy_df.to_csv(entropy_file_path, index=False)
-                st.warning(f"ファイル `{file_to_delete}` のエントロピーデータを削除しました！")
+                st.warning(f"エントロピーデータ（ID: {selected_unique_id}）を削除しました！")
                 st.experimental_rerun()
     
     # ファイルアップロード
@@ -62,6 +65,7 @@ def main():
             entropy_values[col], debug_info[col] = calculate_entropy(df[col].dropna())
         
         entropy_values["file_name"] = uploaded_file.name  # ファイル名を記録
+        entropy_values["unique_id"] = str(uuid.uuid4())  # 一意の識別IDを追加
         entropy_df = pd.DataFrame([entropy_values])
         
         # 結果の表示
