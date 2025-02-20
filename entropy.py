@@ -83,7 +83,12 @@ def main():
                 entropy_values[entropy_col_name] = entropy
                 score_values[col] = calculate_score(entropy, num_variations)
         
-        # スコア計算（存在するカラムのみ）
+        # スコア計算（種類数Vを考慮）
+        for col in existing_columns:
+            if col in score_values:
+                entropy, num_variations, _ = calculate_entropy(df[col].dropna())
+                score_values[col] = calculate_score(entropy, num_variations)
+        
         entropy_values["MDS"] = sum(score_values.get(col, 0) for col in ["absolute_pitch", "pitch_class", "duration"]) / 3
         entropy_values["TDS"] = sum(score_values.get(col, 0) for col in ["fingering", "string", "fret"]) / 3
         entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
