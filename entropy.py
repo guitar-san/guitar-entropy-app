@@ -26,32 +26,66 @@ def main():
     
     entropy_file_path = "total-entropy.csv"
     
+    # データ破損時のリカバリ用
+    if "reset" in st.experimental_get_query_params():
+        if os.path.exists(entropy_file_path):
+            os.remove(entropy_file_path)
+        st.experimental_rerun()
+    
     if os.path.exists(entropy_file_path):
         st.write("### すべてのエントロピーとスコア")
-        saved_entropy_df = pd.read_csv(entropy_file_path)
-        st.write(saved_entropy_df)
+        try:
+            saved_entropy_df = pd.read_csv(entropy_file_path)
+            st.write(saved_entropy_df)
+        except Exception:
+            st.error("保存されたデータが壊れています。リセットしてください。")
+            if st.button("データをリセット"):
+                os.remove(entropy_file_path)
+                st.experimental_rerun()
+            return
     
     st.write("### 新しいCSVファイルをアップロード")
     uploaded_file = st.file_uploader("CSVファイルを選択", type=["csv"])
     
     if uploaded_file is not None:
-        df = pd.read_csv(uploaded_file)
-        st.write("### アップロードされたデータ")
-        st.write(df.head())
+        try:
+            df = pd.read_csv(uploaded_file)
+            st.write("### アップロードされたデータ")
+            st.write(df.head())
+        except Exception:
+            st.error("ファイルの読み込みに失敗しました。正しいCSVファイルをアップロードしてください。")
+            return
         
         columns_to_analyze = ["absolute_pitch", "pitch_class", "duration", "fingering", "string", "fret"]
+        existing_columns = [col for col in columns_to_analyze if col in df.columns]
+        missing_columns = [col for col in columns_to_analyze if col not in df.columns]
+        
+        if missing_columns:
+            st.warning(f"以下のカラムがデータに存在しません: {', '.join(missing_columns)}")
+        
         entropy_values = {"file_name": uploaded_file.name, "unique_id": str(uuid.uuid4())}
         score_values = {}
         
-        for col in columns_to_analyze:
+        for col in existing_columns:
             entropy, num_variations, _ = calculate_entropy(df[col].dropna())
             entropy_values[col + "_entropy"] = entropy
             score_values[col] = calculate_score(entropy, num_variations)
         
-        # スコア計算
-        entropy_values["MDS"] = (score_values["absolute_pitch"] + score_values["pitch_class"] + score_values["duration"]) / 3
-        entropy_values["TDS"] = (score_values["fingering"] + score_values["string"] + score_values["fret"]) / 3
-        entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
+        # スコア計算（存在するカラムのみ）
+        if all(k in score_values for k in ["absolute_pitch", "pitch_class", "duration"]):
+            entropy_values["MDS"] = (score_values["absolute_pitch"] + score_values["pitch_class"] + score_values["duration"]) / 3
+        else:
+            entropy_values["MDS"] = None
+        
+        if all(k in score_values for k in ["fingering", "string", "fret"]):
+            entropy_values["TDS"] = (score_values["fingering"] + score_values["string"] + score_values["fret"]) / 3
+        else:
+            entropy_values["TDS"] = None
+        
+        if entropy_values["MDS"] is not None and entropy_values["TDS"] is not None:
+            entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
+        else:
+            entropy_values["OverallScore"] = None
         
         entropy_df = pd.DataFrame([entropy_values])
         
@@ -73,6 +107,13 @@ def main():
             file_name="total-entropy.csv",
             mime="text/csv"
         )
+    
+    st.write("#### エラー発生時のリセット")
+    st.write("データが破損してアプリが動かなくなった場合、リセットボタンを押してください。")
+    if st.button("データをリセット"):
+        if os.path.exists(entropy_file_path):
+            os.remove(entropy_file_path)
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
