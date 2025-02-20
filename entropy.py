@@ -44,6 +44,16 @@ def main():
                 st.experimental_rerun()
             return
     
+        # 削除したいデータの選択
+        if not saved_entropy_df.empty:
+            file_names = saved_entropy_df["file_name"].unique().tolist()
+            selected_file = st.selectbox("削除するデータを選択", file_names)
+            if st.button("選択したデータを削除"):
+                saved_entropy_df = saved_entropy_df[saved_entropy_df["file_name"] != selected_file]
+                saved_entropy_df.to_csv(entropy_file_path, index=False)
+                st.success(f"{selected_file} のデータを削除しました。")
+                st.experimental_rerun()
+    
     st.write("### 新しいCSVファイルをアップロード")
     uploaded_file = st.file_uploader("CSVファイルを選択", type=["csv"])
     
@@ -67,9 +77,11 @@ def main():
         score_values = {}
         
         for col in existing_columns:
-            entropy, num_variations, _ = calculate_entropy(df[col].dropna())
-            entropy_values[col + "_entropy"] = entropy
-            score_values[col] = calculate_score(entropy, num_variations)
+            entropy_col_name = col + "_entropy"
+            if entropy_col_name not in df.columns:
+                entropy, num_variations, _ = calculate_entropy(df[col].dropna())
+                entropy_values[entropy_col_name] = entropy
+                score_values[col] = calculate_score(entropy, num_variations)
         
         # スコア計算（存在するカラムのみ）
         if all(k in score_values for k in ["absolute_pitch", "pitch_class", "duration"]):
@@ -107,13 +119,6 @@ def main():
             file_name="total-entropy.csv",
             mime="text/csv"
         )
-    
-    st.write("#### エラー発生時のリセット")
-    st.write("データが破損してアプリが動かなくなった場合、リセットボタンを押してください。")
-    if st.button("データをリセット"):
-        if os.path.exists(entropy_file_path):
-            os.remove(entropy_file_path)
-        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
