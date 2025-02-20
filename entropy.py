@@ -40,26 +40,18 @@ def main():
         st.write(df.head())
         
         columns_to_analyze = ["absolute_pitch", "pitch_class", "duration", "fingering", "string", "fret"]
-        entropy_values = {}
+        entropy_values = {"file_name": uploaded_file.name, "unique_id": str(uuid.uuid4())}
         score_values = {}
         
         for col in columns_to_analyze:
             entropy, num_variations, _ = calculate_entropy(df[col].dropna())
-            entropy_values[col] = entropy
+            entropy_values[col + "_entropy"] = entropy
             score_values[col] = calculate_score(entropy, num_variations)
         
         # スコア計算
-        MDS = (score_values["absolute_pitch"] + score_values["pitch_class"] + score_values["duration"]) / 3
-        TDS = (score_values["fingering"] + score_values["string"] + score_values["fret"]) / 3
-        OverallScore = MDS + TDS
-        
-        entropy_values.update({
-            "file_name": uploaded_file.name,
-            "unique_id": str(uuid.uuid4()),
-            "MDS": MDS,
-            "TDS": TDS,
-            "OverallScore": OverallScore
-        })
+        entropy_values["MDS"] = (score_values["absolute_pitch"] + score_values["pitch_class"] + score_values["duration"]) / 3
+        entropy_values["TDS"] = (score_values["fingering"] + score_values["string"] + score_values["fret"]) / 3
+        entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
         
         entropy_df = pd.DataFrame([entropy_values])
         
