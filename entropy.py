@@ -84,22 +84,15 @@ def main():
                 score_values[col] = calculate_score(entropy, num_variations)
         
         # スコア計算（存在するカラムのみ）
-        if all(k in score_values for k in ["absolute_pitch", "pitch_class", "duration"]):
-            entropy_values["MDS"] = (score_values["absolute_pitch"] + score_values["pitch_class"] + score_values["duration"]) / 3
-        else:
-            entropy_values["MDS"] = None
-        
-        if all(k in score_values for k in ["fingering", "string", "fret"]):
-            entropy_values["TDS"] = (score_values["fingering"] + score_values["string"] + score_values["fret"]) / 3
-        else:
-            entropy_values["TDS"] = None
-        
-        if entropy_values["MDS"] is not None and entropy_values["TDS"] is not None:
-            entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
-        else:
-            entropy_values["OverallScore"] = None
+        entropy_values["MDS"] = sum(score_values.get(col, 0) for col in ["absolute_pitch", "pitch_class", "duration"]) / 3
+        entropy_values["TDS"] = sum(score_values.get(col, 0) for col in ["fingering", "string", "fret"]) / 3
+        entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
         
         entropy_df = pd.DataFrame([entropy_values])
+        
+        # カラムの順序を統一（エントロピー → スコア）
+        ordered_columns = ["file_name", "unique_id"] + [col + "_entropy" for col in columns_to_analyze] + ["MDS", "TDS", "OverallScore"]
+        entropy_df = entropy_df.reindex(columns=ordered_columns)
         
         # 既存データと統合
         if os.path.exists(entropy_file_path):
