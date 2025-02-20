@@ -10,15 +10,15 @@ def calculate_entropy(series):
     total_count = len(series)
     probabilities = value_counts / total_count
     
-    # 情報量を算出
+    # 情報量を算出（底2の対数を使用）
     information_values = -probabilities * np.log2(probabilities)
     entropy = information_values.sum()
     
     return entropy, len(value_counts)
 
-# スコア計算関数（S = I * log(1 + V)）
+# スコア計算関数（S = I * log₂(1 + V)）
 def calculate_score(entropy, num_variations):
-    return entropy * np.log(1 + num_variations)
+    return entropy * np.log2(1 + num_variations)
 
 # メイン関数
 def main():
@@ -86,7 +86,7 @@ def main():
                 entropy_values[entropy_col_name] = entropy
                 score_values[col] = calculate_score(entropy, num_variations)
         
-        # スコア計算（S = I × log(1 + V) を正しく適用）
+        # スコア計算（S = I × log₂(1 + V) を正しく適用）
         entropy_values["MDS"] = sum(score_values.get(col, 0) for col in ["absolute_pitch", "pitch_class", "duration"]) / 3
         entropy_values["TDS"] = sum(score_values.get(col, 0) for col in ["fingering", "string", "fret"]) / 3
         entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
