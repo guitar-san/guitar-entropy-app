@@ -14,9 +14,9 @@ def calculate_entropy(series):
     information_values = -probabilities * np.log2(probabilities)
     entropy = information_values.sum()
     
-    return entropy, len(value_counts), information_values.sum()
+    return entropy, len(value_counts)
 
-# スコア計算関数
+# スコア計算関数（S = I * log(1 + V)）
 def calculate_score(entropy, num_variations):
     return entropy * np.log(1 + num_variations)
 
@@ -44,16 +44,6 @@ def main():
                 st.experimental_rerun()
             return
     
-        # 削除したいデータの選択
-        if not saved_entropy_df.empty:
-            file_names = saved_entropy_df["file_name"].unique().tolist()
-            selected_file = st.selectbox("削除するデータを選択", file_names)
-            if st.button("選択したデータを削除"):
-                saved_entropy_df = saved_entropy_df[saved_entropy_df["file_name"] != selected_file]
-                saved_entropy_df.to_csv(entropy_file_path, index=False)
-                st.success(f"{selected_file} のデータを削除しました。")
-                st.experimental_rerun()
-    
     st.write("### 新しいCSVファイルをアップロード")
     uploaded_file = st.file_uploader("CSVファイルを選択", type=["csv"])
     
@@ -79,16 +69,11 @@ def main():
         for col in existing_columns:
             entropy_col_name = col + "_entropy"
             if entropy_col_name not in df.columns:
-                entropy, num_variations, _ = calculate_entropy(df[col].dropna())
+                entropy, num_variations = calculate_entropy(df[col].dropna())
                 entropy_values[entropy_col_name] = entropy
                 score_values[col] = calculate_score(entropy, num_variations)
         
-        # スコア計算（種類数Vを考慮）
-        for col in existing_columns:
-            if col in score_values:
-                entropy, num_variations, _ = calculate_entropy(df[col].dropna())
-                score_values[col] = calculate_score(entropy, num_variations)
-        
+        # スコア計算（S = I × log(1 + V) を正しく適用）
         entropy_values["MDS"] = sum(score_values.get(col, 0) for col in ["absolute_pitch", "pitch_class", "duration"]) / 3
         entropy_values["TDS"] = sum(score_values.get(col, 0) for col in ["fingering", "string", "fret"]) / 3
         entropy_values["OverallScore"] = entropy_values["MDS"] + entropy_values["TDS"]
