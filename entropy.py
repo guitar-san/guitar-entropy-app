@@ -27,7 +27,7 @@ def main():
     entropy_file_path = "total-entropy.csv"
     
     # データ破損時のリカバリ用
-    if "reset" in st.experimental_get_query_params():
+    if "reset" in st.query_params:
         if os.path.exists(entropy_file_path):
             os.remove(entropy_file_path)
         st.experimental_rerun()
