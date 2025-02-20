@@ -26,11 +26,14 @@ def main():
     
     entropy_file_path = "total-entropy.csv"
     
-    # データ破損時のリカバリ用
-    if "reset" in st.query_params:
+    # 全データを削除するボタン
+    if st.button("全データを削除"):
         if os.path.exists(entropy_file_path):
             os.remove(entropy_file_path)
-        st.experimental_rerun()
+            st.success("全てのデータを削除しました！")
+            st.experimental_rerun()
+        else:
+            st.warning("削除するデータがありません。")
     
     if os.path.exists(entropy_file_path):
         st.write("### すべてのエントロピーとスコア")
@@ -43,6 +46,16 @@ def main():
                 os.remove(entropy_file_path)
                 st.experimental_rerun()
             return
+    
+        # 個別データ削除ボタン
+        if not saved_entropy_df.empty:
+            file_names = saved_entropy_df["file_name"].unique().tolist()
+            selected_file = st.selectbox("削除するデータを選択", file_names)
+            if st.button("選択したデータを削除"):
+                saved_entropy_df = saved_entropy_df[saved_entropy_df["file_name"] != selected_file]
+                saved_entropy_df.to_csv(entropy_file_path, index=False)
+                st.success(f"{selected_file} のデータを削除しました。")
+                st.experimental_rerun()
     
     st.write("### 新しいCSVファイルをアップロード")
     uploaded_file = st.file_uploader("CSVファイルを選択", type=["csv"])
