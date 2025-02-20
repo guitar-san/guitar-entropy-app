@@ -22,7 +22,7 @@ def calculate_score(entropy, num_variations):
 
 # メイン関数
 def main():
-    st.title("クラシックギター曲のエントロピーとスコア計算")
+    st.title("楽曲の平均情報量及び音楽的・技術的スコアの算出アプリ")
     
     entropy_file_path = "total-entropy.csv"
     
