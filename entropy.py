@@ -22,7 +22,7 @@ def calculate_score(entropy, num_variations):
 
 # メイン関数
 def main():
-    st.title("楽曲の定量的スコア算出アプリ")
+    st.title("楽曲の定量スコア算出アプリ")
     
     entropy_file_path = "total-entropy.csv"
     
